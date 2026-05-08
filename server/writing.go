@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -16,16 +15,8 @@ func WriteError(w http.ResponseWriter, err string, statusCode int) {
 	http.Error(w, errDTO.ToString(), statusCode)
 }
 
-func WriteJSON(w http.ResponseWriter, data any) error {
-	b, err := json.MarshalIndent(data, "", "    ")
-	if err != nil {
-		return err
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	if _, err := w.Write(b); err != nil {
-		log.Printf("Failed to write http response, error: %s\n", err.Error())
-		return nil
-	}
-	return nil
+func WriteJSON(w http.ResponseWriter, data any, status int) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(data)
 }

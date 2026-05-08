@@ -2,14 +2,19 @@ package server
 
 import (
 	"encoding/json"
+	"rest-api/books"
 	"rest-api/sins"
 	"time"
 )
 
 type BookDTO struct {
-	Title  string
-	Author string
-	Year   int
+	Title  string `json:"title"`
+	Author string `json:"author"`
+	Year   int    `json:"year"`
+}
+
+func BookFromDTO(b BookDTO) books.Book {
+	return books.NewBook(b.Title, b.Author, b.Year)
 }
 
 func (b BookDTO) Validate() error {

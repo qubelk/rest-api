@@ -3,6 +3,7 @@ package books
 import (
 	"maps"
 	"rest-api/sins"
+	"sync"
 
 	"github.com/google/uuid"
 )
@@ -10,14 +11,7 @@ import (
 type Library struct {
 	// key == ID
 	books map[string]Book
-}
-
-func bookExists(l *Library, id string) bool {
-	if _, exists := l.books[id]; exists {
-		return true
-	}
-
-	return false
+	mtx   sync.RWMutex
 }
 
 func NewLibrary() Library {
@@ -32,25 +26,35 @@ func NewLibraryWithCapacity(capacity uint64) Library {
 	}
 }
 
-func (l *Library) AddBook(book Book) error {
-	if bookExists(l, book.ID) {
+func (l *Library) AddBook(book *Book) error {
+	l.mtx.Lock()
+	defer l.mtx.Unlock()
+
+	book.ID = uuid.New().String()
+	if _, exists := l.books[book.ID]; exists {
 		return sins.BookAlreadyExists
 	}
 
-	book.ID = uuid.New().String()
-	l.books[book.ID] = book
+	l.books[book.ID] = *book
 	return nil
 }
 
 func (l *Library) DeleteBook(id string) error {
-	if !bookExists(l, id) {
+	l.mtx.Lock()
+	defer l.mtx.Unlock()
+
+	if _, exists := l.books[id]; !exists {
 		return sins.BookNotExists
 	}
+
 	delete(l.books, id)
 	return nil
 }
 
 func (l *Library) GetAllBooks() map[string]Book {
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+
 	tmp := make(map[string]Book, len(l.books))
 	maps.Copy(tmp, l.books)
 
@@ -58,8 +62,11 @@ func (l *Library) GetAllBooks() map[string]Book {
 }
 
 func (l *Library) GetAllAvailableBooks() map[string]Book {
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+
 	tmp := make(map[string]Book)
-	for k, v := range tmp {
+	for k, v := range l.books {
 		if v.IsAvailable {
 			tmp[k] = v
 		}
@@ -69,8 +76,11 @@ func (l *Library) GetAllAvailableBooks() map[string]Book {
 }
 
 func (l *Library) GetAllBorrowedBooks() map[string]Book {
+	l.mtx.Lock()
+	defer l.mtx.Unlock()
+
 	tmp := make(map[string]Book)
-	for k, v := range tmp {
+	for k, v := range l.books {
 		if !v.IsAvailable {
 			tmp[k] = v
 		}
@@ -80,41 +90,40 @@ func (l *Library) GetAllBorrowedBooks() map[string]Book {
 }
 
 func (l *Library) GetBookByID(id string) (Book, error) {
-	if !bookExists(l, id) {
+	l.mtx.RLock()
+	defer l.mtx.RUnlock()
+
+	if _, exists := l.books[id]; !exists {
 		return Book{}, sins.BookNotExists
 	}
+
 	return l.books[id], nil
 }
 
-func (l *Library) GetBookByAuthor(author string) (Book, error) {
-	for _, v := range l.books {
-		if v.Author == author {
-			return v, nil
-		}
-	}
-	return Book{}, sins.BookNotExists
-}
-
 func (l *Library) BorrowBook(id string) error {
-	if !bookExists(l, id) {
+	l.mtx.Lock()
+	defer l.mtx.Unlock()
+
+	b, exists := l.books[id]
+	if !exists {
 		return sins.BookNotExists
 	}
 
-	b := l.books[id]
 	b.Borrow()
-	b.IsAvailable = false
 	l.books[id] = b
 	return nil
 }
 
 func (l *Library) ReturnBook(id string) error {
-	if !bookExists(l, id) {
+	l.mtx.Lock()
+	defer l.mtx.Unlock()
+
+	b, exists := l.books[id]
+	if !exists {
 		return sins.BookNotExists
 	}
 
-	b := l.books[id]
 	b.Return()
-	b.IsAvailable = true
 	l.books[id] = b
 	return nil
 }

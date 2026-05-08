@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 	"rest-api/books"
 
@@ -30,46 +29,40 @@ func (h *HTTPHandler) AddBookHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	book := books.NewBook(bookDTO.Title, bookDTO.Author, bookDTO.Year)
-	if err := h.library.AddBook(book); err != nil {
+	book := BookFromDTO(bookDTO)
+	if err := h.library.AddBook(&book); err != nil {
 		WriteError(w, err.Error(), http.StatusConflict)
 		return
 	}
 
-	if err := WriteJSON(w, book); err != nil {
+	if err := WriteJSON(w, book, http.StatusCreated); err != nil {
 		WriteError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 }
 
 func (h *HTTPHandler) GetAllBooksHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := json.MarshalIndent(h.library.GetAllBooks(), "", "    ")
-	if err != nil {
+	books := h.library.GetAllBooks()
+	if err := WriteJSON(w, books, http.StatusOK); err != nil {
 		WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	WriteJSON(w, data)
 }
 
 func (h *HTTPHandler) GetAllAvailableBooksHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := json.MarshalIndent(h.library.GetAllAvailableBooks(), "", "    ")
-	if err != nil {
+	books := h.library.GetAllAvailableBooks()
+	if err := WriteJSON(w, books, http.StatusOK); err != nil {
 		WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	WriteJSON(w, data)
 }
 
 func (h *HTTPHandler) GetAllBorrowedBooksHandler(w http.ResponseWriter, r *http.Request) {
-	data, err := json.MarshalIndent(h.library.GetAllBorrowedBooks(), "", "    ")
-	if err != nil {
+	books := h.library.GetAllBorrowedBooks()
+	if err := WriteJSON(w, books, http.StatusOK); err != nil {
 		WriteError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	WriteJSON(w, data)
 }
 
 func (h *HTTPHandler) GetBookByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +73,7 @@ func (h *HTTPHandler) GetBookByIDHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	WriteJSON(w, data)
+	WriteJSON(w, data, http.StatusOK)
 }
 
 func (h *HTTPHandler) BorrowBookHandler(w http.ResponseWriter, r *http.Request) {
