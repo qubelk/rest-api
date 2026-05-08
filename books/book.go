@@ -16,23 +16,7 @@ type Book struct {
 	BorrowedAt  *time.Time `json:"borrowedAt"`
 }
 
-func validate(title string, author string, year int) error {
-	switch {
-	case title == "":
-		return InvalidTitleArgument
-	case author == "":
-		return InvalidAuthorArgument
-	case year > time.Now().Year():
-		return InvalidYearArgument
-	}
-
-	return nil
-}
-
-func NewBook(title string, author string, year int) (Book, error) {
-	if err := validate(title, author, year); err != nil {
-		return Book{}, err
-	}
+func NewBook(title string, author string, year int) Book {
 	return Book{
 		ID:          uuid.New().String(),
 		Title:       title,
@@ -41,7 +25,7 @@ func NewBook(title string, author string, year int) (Book, error) {
 		IsAvailable: true,
 		AddedAt:     time.Now(),
 		BorrowedAt:  nil,
-	}, nil
+	}
 }
 
 func (b *Book) Borrow() {

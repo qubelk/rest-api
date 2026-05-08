@@ -1,5 +1,7 @@
 package books
 
+import "rest-api/sins"
+
 type Library struct {
 	// key == ID
 	books map[string]Book
@@ -27,7 +29,7 @@ func NewLibraryWithCapacity(capacity uint64) Library {
 
 func (l *Library) AddBook(book Book) error {
 	if bookExists(l, book.ID) {
-		return BookAlreadyExists
+		return sins.BookAlreadyExists
 	}
 	l.books[book.ID] = book
 	return nil
@@ -35,7 +37,7 @@ func (l *Library) AddBook(book Book) error {
 
 func (l *Library) DeleteBook(id string) error {
 	if !bookExists(l, id) {
-		return BookNotExists
+		return sins.BookNotExists
 	}
 	delete(l.books, id)
 	return nil
@@ -63,7 +65,7 @@ func (l *Library) GetAllBorrowedBooks() map[string]Book {
 
 func (l *Library) GetBookByID(id string) (Book, error) {
 	if !bookExists(l, id) {
-		return Book{}, BookNotExists
+		return Book{}, sins.BookNotExists
 	}
 	return l.books[id], nil
 }
@@ -74,12 +76,12 @@ func (l *Library) GetBookByAuthor(author string) (Book, error) {
 			return v, nil
 		}
 	}
-	return Book{}, BookNotExists
+	return Book{}, sins.BookNotExists
 }
 
 func (l *Library) BorrowBook(id string) error {
 	if !bookExists(l, id) {
-		return BookNotExists
+		return sins.BookNotExists
 	}
 
 	b := l.books[id]
@@ -91,7 +93,7 @@ func (l *Library) BorrowBook(id string) error {
 
 func (l *Library) ReturnBook(id string) error {
 	if !bookExists(l, id) {
-		return BookNotExists
+		return sins.BookNotExists
 	}
 
 	b := l.books[id]
