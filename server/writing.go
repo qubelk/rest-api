@@ -2,9 +2,14 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 )
+
+func Decode(r io.Reader, data any) error {
+	return json.NewDecoder(r).Decode(data)
+}
 
 func WriteError(w http.ResponseWriter, err string, statusCode int) {
 	errDTO := NewErrorDTO(err)

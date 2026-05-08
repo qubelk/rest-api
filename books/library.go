@@ -1,6 +1,11 @@
 package books
 
-import "rest-api/sins"
+import (
+	"maps"
+	"rest-api/sins"
+
+	"github.com/google/uuid"
+)
 
 type Library struct {
 	// key == ID
@@ -31,6 +36,8 @@ func (l *Library) AddBook(book Book) error {
 	if bookExists(l, book.ID) {
 		return sins.BookAlreadyExists
 	}
+
+	book.ID = uuid.New().String()
 	l.books[book.ID] = book
 	return nil
 }
@@ -45,8 +52,17 @@ func (l *Library) DeleteBook(id string) error {
 
 func (l *Library) GetAllBooks() map[string]Book {
 	tmp := make(map[string]Book, len(l.books))
+	maps.Copy(tmp, l.books)
+
+	return tmp
+}
+
+func (l *Library) GetAllAvailableBooks() map[string]Book {
+	tmp := make(map[string]Book)
 	for k, v := range tmp {
-		tmp[k] = v
+		if v.IsAvailable {
+			tmp[k] = v
+		}
 	}
 
 	return tmp

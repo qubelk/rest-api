@@ -2,8 +2,6 @@ package books
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Book struct {
@@ -18,7 +16,7 @@ type Book struct {
 
 func NewBook(title string, author string, year int) Book {
 	return Book{
-		ID:          uuid.New().String(),
+		ID:          "",
 		Title:       title,
 		Author:      author,
 		Year:        year,
